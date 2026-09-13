@@ -27,6 +27,8 @@ The API is now available at `http://127.0.0.1:8000`.
 
 Interactive API docs (Swagger UI) are auto-generated at `http://127.0.0.1:8000/docs`.
 
+Console log level defaults to `INFO`; override with `LOG_LEVEL=DEBUG uvicorn app.main:app --reload`.
+
 ## Testing the API
 
 No automated test suite — every step is verified manually via Postman and/or the browser. Import the collection at [postman/banking-api.postman_collection.json](postman/banking-api.postman_collection.json) into Postman to exercise the endpoints.

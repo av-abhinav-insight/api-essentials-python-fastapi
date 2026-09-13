@@ -252,3 +252,71 @@ All three come back identically shaped. Ask the class: "A customer calls support
 ### Production note
 
 > Business rules typically live in a rules engine or a config table in a real bank, not hardcoded in a Python function — a limit or a blocked-status flag needs to change without a deploy. We're hardcoding here to keep the teaching focus on the *layering* (models vs. services vs. routing), not on rules-engine design.
+
+---
+
+## Step 5 — Structured error handling
+**Tag:** `module1-step05-error-handling`
+
+### The problem, live
+
+Every business-rule rejection from Step 4 comes back as the same generic shape. A frontend developer receiving `400 {"detail": "..."}` has to string-match the message to know what actually went wrong — brittle, and it breaks the moment someone rewords a message.
+
+### The fix: one exception per failure, one consistent error shape
+
+`app/exceptions/handlers.py` defines four exceptions — `AccountNotFoundException`, `AccountBlockedException`, `InsufficientBalanceException`, `TransactionLimitExceededException` — and a FastAPI exception handler per exception, each returning:
+
+```json
+{"error_code": "ACCOUNT_BLOCKED", "message": "...", "request_id": null}
+```
+
+(`request_id` stays `null` — it gets wired up in Step 10.)
+
+`routers/transfers.py` now `raise`s the matching exception instead of a generic `HTTPException`, and each maps to a distinct status code:
+
+| Exception | Status | `error_code` |
+|---|---|---|
+| `AccountNotFoundException` | 404 | `ACCOUNT_NOT_FOUND` |
+| `InsufficientBalanceException` | 400 | `INSUFFICIENT_BALANCE` |
+| `AccountBlockedException` | 409 | `ACCOUNT_BLOCKED` |
+| `TransactionLimitExceededException` | 422 | `TRANSACTION_LIMIT_EXCEEDED` |
+
+### Demo (Postman)
+
+Re-run the Step 4 rejection calls — Blocked Account, Over Daily Limit, Insufficient Balance — and this time each comes back with a *different*, meaningful status code and an `error_code` a frontend can safely branch on, instead of one indistinguishable `400`.
+
+### Production note
+
+> The error response is part of the API contract — frontend teams build UI off `error_code` ("this account is blocked, show this specific banner"), never off the Python exception class name or a hardcoded message string that might get reworded next sprint.
+
+---
+
+## Step 9 — Logging
+**Tag:** `module1-step09-logging`
+
+### Framing
+
+"Yesterday a customer said their ₹10,000 transfer failed. How do we find out what happened?" Right now: we can't. The API returns an answer to the caller and then remembers nothing.
+
+### The fix: structured log lines through the transfer flow
+
+`app/main.py` configures `logging.basicConfig()` using a new `LOG_LEVEL` setting in `config.py` (defaults to `INFO`, override with the `LOG_LEVEL` env var).
+
+`routers/transfers.py` emits one log line at each meaningful point in the flow — `transaction_started`, `account_not_found`, `account_blocked`, `account_validation_success`, `transaction_limit_exceeded`, `insufficient_balance`, `transaction_completed` — each carrying `transaction_id`, `account_id`, and `status`:
+
+```
+transaction_started transaction_id=... account_id=acc-1003 status=STARTED
+account_blocked transaction_id=... account_id=acc-1003 status=REJECTED
+```
+
+Notice what's *not* logged: the transfer `amount`, and never the full `account_number` — only the logical `account_id`. That's deliberate, not an omission (see the production note).
+
+The `transaction_id` is now generated once, at the very start of `create_transfer`, before any validation runs — so every log line for one request, successful or rejected, shares the same id.
+
+### Demo
+
+Run the server in one terminal, tail its console output, and fire the "Transfer - Blocked Account" (or any other rejection) request from Postman in another window. Point at the `account_blocked ... status=REJECTED` line that appears the instant the request lands — the log line is the answer to the customer-support question from the framing.
+
+### Production note
+
+> Never log tokens, PINs, full account numbers, or full transfer amounts if policy requires masking — this is a real audit/compliance concern in banking, not a style preference. Logging the logical `account_id` (`acc-1003`) instead of the real account number, and omitting `amount` entirely, is the smallest version of that discipline.
