@@ -3,8 +3,30 @@ from fastapi import APIRouter
 router = APIRouter()
 
 ACCOUNTS = {
-    "acc-1001": {"account_id": "acc-1001", "account_number": 1234355753, "account_holder": "Asha Rao", "balance": 45230.50},
-    "acc-1002": {"account_id": "acc-1002", "account_number": 1234355754, "account_holder": "Ravi Kumar", "balance": 12890.00},
+    "acc-1001": {
+        "account_id": "acc-1001",
+        "account_number": 1234355753,
+        "account_holder": "Asha Rao",
+        "balance": 45230.50,
+        "status": "ACTIVE",
+        "daily_limit": 50000,
+    },
+    "acc-1002": {
+        "account_id": "acc-1002",
+        "account_number": 1234355754,
+        "account_holder": "Ravi Kumar",
+        "balance": 12890.00,
+        "status": "ACTIVE",
+        "daily_limit": 50000,
+    },
+    "acc-1003": {
+        "account_id": "acc-1003",
+        "account_number": 1234355755,
+        "account_holder": "Meera Iyer",
+        "balance": 100000.00,
+        "status": "BLOCKED",
+        "daily_limit": 50000,
+    },
 }
 
 

@@ -168,3 +168,87 @@ Rewire `routers/transfers.py` to take a `TransferRequest` and return a `Transfer
 ### Production note
 
 > Contracts are how frontend/backend/mobile teams stay decoupled — each team codes against the shape of `TransferRequest`/`TransferResponse`, not against each other's implementation. In enterprises, this pays off further: FastAPI's generated OpenAPI schema can drive auto-generated client SDKs, so a mobile team never hand-writes a request struct that could drift from what the backend actually expects.
+
+---
+
+## Step 3 — Input validation
+**Tag:** `module1-step03-input-validation`
+
+### The problem, live
+
+`TransferRequest` currently accepts *any* string for `from_account`/`to_account` and *any* float for `amount` — including negative amounts, an account transferring to itself, or an account ID that isn't shaped like one of ours. The model shape is right; the model *content* isn't checked at all yet.
+
+### The fix: constraints and validators on `TransferRequest`
+
+```python
+ACCOUNT_ID_PATTERN = r"^acc-\d{4}$"
+
+class TransferRequest(BaseModel):
+    from_account: str = Field(..., pattern=ACCOUNT_ID_PATTERN)
+    to_account: str = Field(..., pattern=ACCOUNT_ID_PATTERN)
+    amount: float = Field(..., gt=0)
+
+    @model_validator(mode="after")
+    def check_accounts_are_different(self):
+        if self.from_account == self.to_account:
+            raise ValueError("from_account and to_account must be different")
+        return self
+```
+
+### Demo (Postman) — 5 pre-built bad requests, each a clean `422`
+
+1. **Negative Amount** — `amount: -500` → fails `gt=0`
+2. **Zero Amount** — `amount: 0` → fails `gt=0`
+3. **Missing Field** — no `to_account` → "field required"
+4. **Same Account** — `from_account == to_account` → the `model_validator` message
+5. **Bad Account Format** — `from_account: "1001"` (no `acc-` prefix) → fails the pattern
+
+Every one of these returns `422` with field-level (or, for the same-account case, request-level) detail — no `500`s, no silent acceptance.
+
+### Key distinction to teach
+
+**API/input validation** ("is this structurally and syntactically valid?") is everything we just added — shape, format, range. **Business validation** ("should this actually be allowed to happen?") is a different question entirely: is the account blocked? Does the customer have the money? Has today's transfer limit already been hit? Pydantic can't answer any of that — it doesn't know what a "blocked account" is. That's Step 4.
+
+### Production note
+
+> This layer only proves shape, never permission. A request that sails through every constraint here can still be one the business must refuse. Keeping the two concerns in separate layers — models vs. services — is what lets each be tested, and reasoned about, independently.
+
+---
+
+## Step 4 — Business rules
+**Tag:** `module1-step04-business-rules`
+
+### The problem, live
+
+Send a request that passes every Step 3 check — well-formed accounts, positive amount, different accounts — from an account that's `BLOCKED`, or that would blow past a daily limit, or that simply doesn't have the money. Right now nothing stops it: the handler builds a `TransferResponse` and returns `200` regardless. Structurally valid isn't the same as *allowed*.
+
+### The fix: a service layer for business rules
+
+`app/services/transfer_service.py`:
+
+```python
+def check_account_status(account: dict) -> bool:
+    return account["status"] == "ACTIVE"
+
+def check_transaction_limit(account: dict, amount: float) -> bool:
+    return amount <= account["daily_limit"]
+
+def check_balance(account: dict, amount: float) -> bool:
+    return account["balance"] >= amount
+```
+
+`ACCOUNTS` in `routers/accounts.py` gains `status` and `daily_limit` so a blocked account and a limit can actually be demoed — including one account, `acc-1003`, seeded as `BLOCKED`.
+
+`routers/transfers.py` looks up the source account and runs all three checks before building a response. Every failure — account not found, blocked, over-limit, insufficient balance — currently returns the *same* generic `400 {"detail": "transfer rejected"}`. That's deliberate, not an oversight.
+
+### Demo (Postman)
+
+1. **Blocked Account** (`acc-1003`, status `BLOCKED`) → rejected
+2. **Over Daily Limit** (`acc-1001`, limit 50,000, amount 60,000) → rejected
+3. **Insufficient Balance** (`acc-1002`, balance 12,890, amount 20,000, under its limit) → rejected
+
+All three come back identically shaped. Ask the class: "A customer calls support about a failed transfer. Support asks *why* it failed. What can we tell them right now?" The honest answer is "no idea, from the response alone" — that gap is exactly what Step 5 closes.
+
+### Production note
+
+> Business rules typically live in a rules engine or a config table in a real bank, not hardcoded in a Python function — a limit or a blocked-status flag needs to change without a deploy. We're hardcoding here to keep the teaching focus on the *layering* (models vs. services vs. routing), not on rules-engine design.

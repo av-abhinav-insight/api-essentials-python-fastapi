@@ -67,6 +67,150 @@
           "path": ["transfers"]
         }
       }
+    },
+    {
+      "name": "Transfer - Negative Amount",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"to_account\": \"acc-1002\",\n  \"amount\": -500\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
+    },
+    {
+      "name": "Transfer - Zero Amount",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"to_account\": \"acc-1002\",\n  \"amount\": 0\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
+    },
+    {
+      "name": "Transfer - Missing Field",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"amount\": 500\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
+    },
+    {
+      "name": "Transfer - Same Account",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"to_account\": \"acc-1001\",\n  \"amount\": 500\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
+    },
+    {
+      "name": "Transfer - Bad Account Format",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"1001\",\n  \"to_account\": \"acc-1002\",\n  \"amount\": 500\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
+    },
+    {
+      "name": "Transfer - Blocked Account",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1003\",\n  \"to_account\": \"acc-1001\",\n  \"amount\": 500\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
+    },
+    {
+      "name": "Transfer - Over Daily Limit",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"to_account\": \"acc-1002\",\n  \"amount\": 60000\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
+    },
+    {
+      "name": "Transfer - Insufficient Balance",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1002\",\n  \"to_account\": \"acc-1001\",\n  \"amount\": 20000\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
     }
   ]
 }
