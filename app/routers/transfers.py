@@ -3,7 +3,7 @@ import uuid
 
 from fastapi import APIRouter, Depends
 
-from app.auth import get_current_user
+from app.auth import ensure_account_access, require_permission
 from app.exceptions.handlers import (
     AccountBlockedException,
     AccountNotFoundException,
@@ -30,7 +30,8 @@ def _log(event: str, level: int, transaction_id: str, account_id: str, status: s
 
 
 @router.post("/transfers", response_model=TransferResponse)
-def create_transfer(transfer: TransferRequest, user: dict = Depends(get_current_user)):
+def create_transfer(transfer: TransferRequest, user: dict = Depends(require_permission("transfer:create"))):
+    ensure_account_access(user, transfer.from_account)
     transaction_id = str(uuid.uuid4())
     _log("transaction_started", logging.INFO, transaction_id, transfer.from_account, "STARTED")
 

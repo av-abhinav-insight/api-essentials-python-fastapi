@@ -352,6 +352,66 @@ Two things get built:
 
 ---
 
+## Step 8 — Authorization (RBAC)
+**Tag:** `module1-step08-authorization`
+
+### The problem, live
+
+Step 7 proves *who* is calling, but says nothing about what they're allowed to do. Log in as Asha and transfer money out of Ravi's account, or check anyone's balance with anyone's token — every authenticated caller is currently equally powerful. Fire a transfer from Asha's token against `acc-1002` (not her account) from Postman — it succeeds. That's the gap.
+
+### Ask the class
+
+"Asha's token is valid. Should that mean Asha can touch *any* account, or just her own? And should every valid token be allowed to move money at all?"
+
+### The fix: two independent checks — role permission, then resource ownership
+
+The class has defined two roles beyond `ADMIN`: **`LITE_CUSTOMER`** (read-only) and **`STD_CUSTOMER`** (can also transfer). `app/auth.py` maps each role to what it's allowed to *do*, independent of *which* account:
+
+```python
+ROLE_PERMISSIONS = {
+    "LITE_CUSTOMER": {"account:read"},
+    "STD_CUSTOMER": {"account:read", "transfer:create"},
+    "ADMIN": {"account:read", "transfer:create"},
+}
+
+ADMIN_ROLES = {"ADMIN"}
+```
+
+Two RBAC primitives sit on top of Step 7's `get_current_user`:
+
+1. **`require_permission(permission)`** — a dependency *factory*. `Depends(require_permission("transfer:create"))` on a route means: run `get_current_user` first, then check the resulting role actually has that permission. `LITE_CUSTOMER` has no `transfer:create`, so it's rejected before the handler body ever runs — a new `PermissionDeniedException` → `403 {"error_code": "PERMISSION_DENIED", ...}`.
+
+2. **`ensure_account_access(user, account_id)`** — called inside the handler once we know *which* account is being touched (the path param for balance, `from_account` for a transfer). A `LITE_CUSTOMER`/`STD_CUSTOMER` may only act on their own `account_id`; `ADMIN` bypasses this entirely. Mismatch → a new `AccountAccessForbiddenException` → `403 {"error_code": "ACCOUNT_ACCESS_FORBIDDEN", ...}`.
+
+```python
+@router.get("/accounts/{account_id}/balance")
+def get_balance(account_id: str, user: dict = Depends(require_permission("account:read"))):
+    ensure_account_access(user, account_id)
+    ...
+
+@router.post("/transfers", response_model=TransferResponse)
+def create_transfer(transfer: TransferRequest, user: dict = Depends(require_permission("transfer:create"))):
+    ensure_account_access(user, transfer.from_account)
+    ...
+```
+
+Two different 403s on purpose: `PERMISSION_DENIED` means "your role can't do this action, on any account." `ACCOUNT_ACCESS_FORBIDDEN` means "you *can* do this action, just not on this account." A frontend needs to tell those apart — one might mean "show an upgrade prompt," the other "you searched for the wrong account."
+
+### Demo (Postman)
+
+1. **Login - Asha (LITE_CUSTOMER)**, then **RBAC - Lite Customer Reads Own Balance** → `200`.
+2. **RBAC - Lite Customer Reads Others Balance (403)** (`acc-1002` with Asha's token) → `403 ACCOUNT_ACCESS_FORBIDDEN`.
+3. **RBAC - Lite Customer Attempts Transfer (403 Permission Denied)** → `403 PERMISSION_DENIED` — rejected on role alone, before account ownership is even checked.
+4. **Login - Ravi (STD_CUSTOMER)**, then **RBAC - Std Customer Transfers Own Account** → `200`.
+5. **RBAC - Std Customer Transfers Others Account (403)** (`from_account: acc-1001` with Ravi's token) → `403 ACCOUNT_ACCESS_FORBIDDEN` — Ravi *has* the permission, just not on someone else's account.
+6. **Login - Admin**, then **RBAC - Admin Transfers Any Account** and **RBAC - Admin Reads Any Balance** → both `200` — `ADMIN` has every permission and bypasses ownership.
+
+### Production note
+
+> At scale, authorization decisions live in a centralized policy layer or permissions table — not scattered `if` checks copy-pasted across every route — so a rule change ships without touching route code, and every service enforces the same policy consistently. `ROLE_PERMISSIONS` here is that same idea in miniature: a hardcoded table now, a policy service later.
+
+---
+
 ## Step 9 — Logging
 **Tag:** `module1-step09-logging`
 

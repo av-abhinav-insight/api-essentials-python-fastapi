@@ -11,6 +11,14 @@
     {
       "key": "access_token",
       "value": ""
+    },
+    {
+      "key": "access_token_ravi",
+      "value": ""
+    },
+    {
+      "key": "access_token_admin",
+      "value": ""
     }
   ],
   "item": [
@@ -30,7 +38,7 @@
       }
     },
     {
-      "name": "Login - Asha",
+      "name": "Login - Asha (LITE_CUSTOMER)",
       "event": [
         {
           "listen": "test",
@@ -54,6 +62,82 @@
         "body": {
           "mode": "raw",
           "raw": "{\n  \"username\": \"asha\",\n  \"password\": \"anything\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login - Ravi (STD_CUSTOMER)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('access_token_ravi', body.access_token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"ravi\",\n  \"password\": \"anything\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login - Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('access_token_admin', body.access_token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"anything\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/auth/login",
@@ -419,6 +503,191 @@
           ],
           "path": [
             "transfers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RBAC - Lite Customer Reads Own Balance",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/accounts/acc-1001/balance",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "acc-1001",
+            "balance"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RBAC - Lite Customer Reads Others Balance (403)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/accounts/acc-1002/balance",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "acc-1002",
+            "balance"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RBAC - Lite Customer Attempts Transfer (403 Permission Denied)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"to_account\": \"acc-1002\",\n  \"amount\": 100\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RBAC - Std Customer Transfers Own Account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token_ravi}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1002\",\n  \"to_account\": \"acc-1001\",\n  \"amount\": 100\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RBAC - Std Customer Transfers Others Account (403)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token_ravi}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"to_account\": \"acc-1002\",\n  \"amount\": 100\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RBAC - Admin Transfers Any Account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token_admin}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"to_account\": \"acc-1002\",\n  \"amount\": 100\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RBAC - Admin Reads Any Balance",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token_admin}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/accounts/acc-1002/balance",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "acc-1002",
+            "balance"
           ]
         }
       }
