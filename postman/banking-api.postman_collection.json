@@ -7,6 +7,10 @@
     {
       "key": "baseUrl",
       "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
     }
   ],
   "item": [
@@ -16,8 +20,76 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["health"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login - Asha",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('access_token', body.access_token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"asha\",\n  \"password\": \"anything\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login - Unknown User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"nobody\",\n  \"password\": \"anything\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
         }
       }
     },
@@ -27,8 +99,37 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/accounts/acc-1001/balance",
-          "host": ["{{baseUrl}}"],
-          "path": ["accounts", "acc-1001", "balance"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "acc-1001",
+            "balance"
+          ]
+        },
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Get Account Balance - No Token",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/accounts/acc-1001/balance",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "acc-1001",
+            "balance"
+          ]
         }
       }
     },
@@ -37,7 +138,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -45,8 +153,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     },
@@ -55,7 +167,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -63,8 +182,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     },
@@ -73,7 +196,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -81,8 +211,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     },
@@ -91,7 +225,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -99,8 +240,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     },
@@ -109,7 +254,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -117,8 +269,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     },
@@ -127,7 +283,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -135,8 +298,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     },
@@ -145,7 +312,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -153,8 +327,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     },
@@ -163,7 +341,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -171,8 +356,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     },
@@ -181,7 +370,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -189,8 +385,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     },
@@ -199,7 +399,14 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -207,8 +414,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/transfers",
-          "host": ["{{baseUrl}}"],
-          "path": ["transfers"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transfers"
+          ]
         }
       }
     }

@@ -291,6 +291,67 @@ Re-run the Step 4 rejection calls — Blocked Account, Over Daily Limit, Insuffi
 
 ---
 
+## Step 7 — Authentication
+**Tag:** `module1-step07-authentication`
+
+### The problem, live
+
+Anyone can currently call `GET /accounts/{id}/balance` or `POST /transfers` with no proof of who they are. Fire the "Get Account Balance" request from Postman with no headers at all — it happily returns someone else's balance. There's no concept of a *caller* yet, only a URL.
+
+### Ask the class
+
+"Right now, what stops me from checking *your* balance?" Let the answer be "nothing" before moving on.
+
+### The fix: a signed JWT issued at login, verified on every protected call
+
+Two things get built:
+
+1. **A `POST /auth/login` endpoint** that accepts a `username`/`password` and — deliberately — never checks the password. It exists to demonstrate *issuing* a token, not to be a real login system:
+
+   ```python
+   @router.post("/auth/login", response_model=LoginResponse)
+   def login(credentials: LoginRequest):
+       user = authenticate_user(credentials.username)   # password ignored on purpose
+       token = create_access_token(user)
+       return LoginResponse(access_token=token)
+   ```
+
+   `app/auth.py` holds a hardcoded `USERS` dict (username → `user_id`, `account_id`, `role`) — the same "hardcoded dict" pattern as `ACCOUNTS`. `create_access_token` builds a JWT payload (`sub`, `account_id`, `role`, `exp`) and signs it with `PyJWT` using a secret from a new `AUTH_TOKEN_SECRET` setting in `config.py` (plus `AUTH_TOKEN_EXPIRE_MINUTES`, default 30).
+
+2. **A `get_current_user` dependency** that reads `Authorization: Bearer <token>` (via FastAPI's `HTTPBearer`), verifies the JWT signature and expiry, and returns the decoded claims. Applied to `GET /accounts/{id}/balance` and `POST /transfers`:
+
+   ```python
+   @router.get("/accounts/{account_id}/balance")
+   def get_balance(account_id: str, user: dict = Depends(get_current_user)):
+       ...
+   ```
+
+   A missing token, a garbage string, or a tampered/expired JWT all raise a new `AuthenticationException`, wired into `exceptions/handlers.py` exactly like the Step 5 exceptions:
+
+   ```json
+   {"error_code": "UNAUTHORIZED", "message": "Missing or invalid authentication token.", "request_id": null}
+   ```
+
+   An unknown username at `/auth/login` gets its own exception, `InvalidCredentialsException` → `401 {"error_code": "INVALID_CREDENTIALS", ...}` — a different `error_code` from a bad token, because they're different problems for a frontend to handle.
+
+### Demo (Postman)
+
+1. **Login - Asha** → `200`, returns a JWT. A Postman test script on this request stores it in the `access_token` collection variable automatically.
+2. **Get Account Balance - No Token** → `401 UNAUTHORIZED`.
+3. **Get Account Balance** (now sends `Authorization: Bearer {{access_token}}`) → `200`.
+4. **Login - Unknown User** → `401 INVALID_CREDENTIALS`.
+5. Re-run any of the Step 3/4 transfer requests — they now carry the same bearer token and still succeed/fail on the same rules as before; auth is a layer *in front of* everything already built, not a replacement for it.
+
+### Teach
+
+**Authentication** ("who are you?") is everything built today — proving identity via a credential. **Authorization** ("what are you allowed to do?") is the next question entirely: today, Asha's token can read *anyone's* balance, not just `acc-1001`. That gap is Step 8.
+
+### Production note
+
+> Real systems don't hand-roll JWT issuance like this — they delegate to an identity provider over OIDC/OAuth2 (Auth0, Okta, Azure AD, Google Identity...), so the API only ever *verifies* tokens it didn't create, against keys it fetches from the provider. We're signing and verifying with our own secret here to keep the demo self-contained and focused on the concept — the mechanics (JWT structure, signature verification, expiry) transfer directly to the real thing.
+
+---
+
 ## Step 9 — Logging
 **Tag:** `module1-step09-logging`
 

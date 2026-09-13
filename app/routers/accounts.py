@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+from app.auth import get_current_user
 
 router = APIRouter()
 
@@ -36,7 +38,7 @@ def health_check():
 
 
 @router.get("/accounts/{account_id}/balance")
-def get_balance(account_id: str):
+def get_balance(account_id: str, user: dict = Depends(get_current_user)):
     account = ACCOUNTS.get(account_id)
     if account is None:
         return {"error": "account not found"}

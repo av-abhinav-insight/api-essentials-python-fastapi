@@ -1,8 +1,9 @@
 import logging
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.auth import get_current_user
 from app.exceptions.handlers import (
     AccountBlockedException,
     AccountNotFoundException,
@@ -29,7 +30,7 @@ def _log(event: str, level: int, transaction_id: str, account_id: str, status: s
 
 
 @router.post("/transfers", response_model=TransferResponse)
-def create_transfer(transfer: TransferRequest):
+def create_transfer(transfer: TransferRequest, user: dict = Depends(get_current_user)):
     transaction_id = str(uuid.uuid4())
     _log("transaction_started", logging.INFO, transaction_id, transfer.from_account, "STARTED")
 

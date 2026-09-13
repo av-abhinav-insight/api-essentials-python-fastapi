@@ -22,6 +22,14 @@ class TransactionLimitExceededException(Exception):
         self.account_id = account_id
 
 
+class AuthenticationException(Exception):
+    pass
+
+
+class InvalidCredentialsException(Exception):
+    pass
+
+
 def _error_response(status_code: int, error_code: str, message: str) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
@@ -49,8 +57,18 @@ async def transaction_limit_exceeded_handler(request: Request, exc: TransactionL
     )
 
 
+async def authentication_handler(request: Request, exc: AuthenticationException) -> JSONResponse:
+    return _error_response(401, "UNAUTHORIZED", "Missing or invalid authentication token.")
+
+
+async def invalid_credentials_handler(request: Request, exc: InvalidCredentialsException) -> JSONResponse:
+    return _error_response(401, "INVALID_CREDENTIALS", "Username or password is incorrect.")
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AccountNotFoundException, account_not_found_handler)
     app.add_exception_handler(AccountBlockedException, account_blocked_handler)
     app.add_exception_handler(InsufficientBalanceException, insufficient_balance_handler)
     app.add_exception_handler(TransactionLimitExceededException, transaction_limit_exceeded_handler)
+    app.add_exception_handler(AuthenticationException, authentication_handler)
+    app.add_exception_handler(InvalidCredentialsException, invalid_credentials_handler)
