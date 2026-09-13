@@ -1,2 +1,8 @@
-# Introduced in Step 2 (request/response models) — empty placeholder to keep the
-# folder structure fixed from Step 1 onward.
+from pydantic import BaseModel
+
+
+class AccountResponse(BaseModel):
+    account_id: str
+    account_number: int
+    account_holder: str
+    balance: float

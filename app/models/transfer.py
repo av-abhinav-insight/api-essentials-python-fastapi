@@ -1,2 +1,15 @@
-# Introduced in Step 2 (request/response models) — empty placeholder to keep the
-# folder structure fixed from Step 1 onward.
+from pydantic import BaseModel
+
+
+class TransferRequest(BaseModel):
+    from_account: str
+    to_account: str
+    amount: float
+
+
+class TransferResponse(BaseModel):
+    transaction_id: str
+    from_account: str
+    to_account: str
+    amount: float
+    status: str

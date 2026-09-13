@@ -31,6 +31,42 @@
           "path": ["accounts", "acc-1001", "balance"]
         }
       }
+    },
+    {
+      "name": "Create Transfer - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"to_account\": \"acc-1002\",\n  \"amount\": 500\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
+    },
+    {
+      "name": "Create Transfer - Malformed Body",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account\": \"acc-1001\",\n  \"amount\": \"not-a-number\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfers",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfers"]
+        }
+      }
     }
   ]
 }
