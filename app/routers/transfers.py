@@ -7,6 +7,7 @@ from app.auth import ensure_account_access, require_permission
 from app.exceptions.handlers import (
     AccountBlockedException,
     AccountNotFoundException,
+    FraudCheckFailedException,
     InsufficientBalanceException,
     TransactionLimitExceededException,
 )
@@ -49,6 +50,10 @@ def create_transfer(transfer: TransferRequest, user: dict = Depends(require_perm
     if not transfer_service.check_transaction_limit(from_account, transfer.amount):
         _log("transaction_limit_exceeded", logging.WARNING, transaction_id, transfer.from_account, "REJECTED")
         raise TransactionLimitExceededException(transfer.from_account)
+
+    if not transfer_service.check_fraud(transfer.amount):
+        _log("fraud_check_failed", logging.WARNING, transaction_id, transfer.from_account, "REJECTED")
+        raise FraudCheckFailedException(transfer.from_account)
 
     if not transfer_service.check_balance(from_account, transfer.amount):
         _log("insufficient_balance", logging.WARNING, transaction_id, transfer.from_account, "REJECTED")
