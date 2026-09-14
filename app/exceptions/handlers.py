@@ -46,6 +46,10 @@ class FraudCheckFailedException(Exception):
         self.account_id = account_id
 
 
+class FraudServiceUnavailableException(Exception):
+    pass
+
+
 def _error_response(status_code: int, error_code: str, message: str) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
@@ -90,6 +94,21 @@ async def fraud_check_failed_handler(request: Request, exc: FraudCheckFailedExce
     return _error_response(403, "FRAUD_CHECK_FAILED", f"Fraud check failed for account {exc.account_id}.")
 
 
+async def fraud_service_unavailable_handler(request: Request, exc: FraudServiceUnavailableException) -> JSONResponse:
+    return _error_response(
+        503,
+        "FRAUD_SERVICE_UNAVAILABLE",
+        "Fraud service is unavailable. The transfer was not executed. Please try again later.",
+    )
+
+
+async def fraud_service_unavailable_handler(request: Request, exc: FraudServiceUnavailableException) -> JSONResponse:
+    return _error_response(
+        503,
+        "FRAUD_SERVICE_UNAVAILABLE",
+        "Fraud service is unavailable. The transfer was not executed. Please try again later.",
+    )
+
 
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AccountNotFoundException, account_not_found_handler)
@@ -100,3 +119,4 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(InvalidCredentialsException, invalid_credentials_handler)
     app.add_exception_handler(PermissionDeniedException, permission_denied_handler)
     app.add_exception_handler(FraudCheckFailedException, fraud_check_failed_handler)
+    app.add_exception_handler(FraudServiceUnavailableException, fraud_service_unavailable_handler)

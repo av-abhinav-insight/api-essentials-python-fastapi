@@ -6,5 +6,6 @@ class Settings:
     AUTH_TOKEN_SECRET: str = os.getenv("AUTH_TOKEN_SECRET", "dev-only-insecure-secret")
     AUTH_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("AUTH_TOKEN_EXPIRE_MINUTES", "30"))
     FRAUD_SERVICE_URL: str = os.getenv("FRAUD_SERVICE_URL", "http://localhost:8001")
+    FRAUD_SERVICE_TIMEOUT_SECONDS: float = float(os.getenv("FRAUD_SERVICE_TIMEOUT_SECONDS", "5"))
 
 settings = Settings()
